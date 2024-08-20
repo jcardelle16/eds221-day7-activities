@@ -1,0 +1,66 @@
+---
+title: "Day 7 Activities with Birds"
+author: "Josephine Cardelle"
+format: html
+editor: visual
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, include=FALSE, message=FALSE, warning=FALSE}
+# load libraries ----
+library(tidyverse)
+library(here)
+library(janitor)
+library(lubridate)
+```
+
+# Task 1: Joins on birds
+```{r}
+# read in data ----
+bird_observations <- read_csv(here("data","52_pp52_birds_1.csv"))
+sites <- read_csv(here("data","52_pp52_sites_1.csv"))
+surveys <- read_csv(here("data","52_pp52_surveys_1.csv"))
+taxalist <- read_csv(here("data","52_pp52_taxalist_1.csv"))
+```
+
+```{r}
+# create subset ----
+birds_subset <- bird_observations %>%
+  filter(species_id %in% c("BHCO", "RWBL"), site_id %in% c("LI-W", "NU-C"))
+
+# left join practice ----
+birds_left <- left_join(birds_subset, sites, by = join_by(site_id))
+
+birds_left <- left_join(birds_subset, surveys, by = join_by(survey_id))
+
+# full join practice ----
+birds_full <- full_join(birds_subset, sites, by = join_by(site_id))
+```
+
+# Task 2: Data Wrangling and Visualization with Birds
+```{r}
+# create subset ----
+bird_observations <- bird_observations %>%
+  rename(bird_obs_notes = notes)
+
+bird_all <- left_join(bird_observations, taxalist, by = join_by(species_id)) 
+
+bird_all <- left_join(bird_all, sites, by = join_by(site_id))
+bird_all <- left_join(bird_all, surveys, by = join_by(survey_id)) 
+
+bird_all <- bird_all %>%
+  select(c(survey_date, common_name, park_name, bird_count))
+
+bird_all <- bird_all %>%
+  mutate(survey_month = month(survey_date)) %>%
+mutate(survey_month = as.factor(survey_month)) %>%
+  relocate(survey_month, .after = survey_date) %>%
+  group_by(park_name, survey_month) %>%
+  summarize(total_birds = n())
+
+bird_all <- bird_all %>%
+  filter(park_name %in% c("Lindo", "Orme", "Palomino", "Sonrisa"))
+
+```
+
